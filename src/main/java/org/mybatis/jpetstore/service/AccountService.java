@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2022 the original author or authors.
+ *    Copyright 2010-2023 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,11 +15,16 @@
  */
 package org.mybatis.jpetstore.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Optional;
 
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.mybatis.jpetstore.domain.Account;
 import org.mybatis.jpetstore.mapper.AccountMapper;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -27,16 +32,22 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author Eduardo Macarron
  */
-@Service
 public class AccountService {
 
-  private final AccountMapper accountMapper;
+  private AccountMapper accountMapper;
 
-  public AccountService(AccountMapper accountMapper) {
-    this.accountMapper = accountMapper;
+  public AccountService() throws IOException {
+
+    String resource = "mybatis-config.xml";
+    InputStream inputStream = Resources.getResourceAsStream(resource);
+    SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    SqlSession session = sqlSessionFactory.openSession();
+    this.accountMapper = session.getMapper(AccountMapper.class);
+    // System.out.println(accountMapper);
   }
 
   public Account getAccount(String username) {
+    System.out.println(username);
     return accountMapper.getAccountByUsername(username);
   }
 

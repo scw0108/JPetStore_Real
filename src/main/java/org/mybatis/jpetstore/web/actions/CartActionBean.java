@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2022 the original author or authors.
+ *    Copyright 2010-2023 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.mybatis.jpetstore.web.actions;
 
+import java.io.IOException;
 import java.util.Iterator;
 
 import javax.servlet.http.HttpServletRequest;
@@ -22,7 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.SessionScope;
-import net.sourceforge.stripes.integration.spring.SpringBean;
 
 import org.mybatis.jpetstore.domain.Cart;
 import org.mybatis.jpetstore.domain.CartItem;
@@ -42,11 +42,13 @@ public class CartActionBean extends AbstractActionBean {
   private static final String VIEW_CART = "/WEB-INF/jsp/cart/Cart.jsp";
   private static final String CHECK_OUT = "/WEB-INF/jsp/cart/Checkout.jsp";
 
-  @SpringBean
-  private transient CatalogService catalogService;
+  private transient CatalogService catalogService = new CatalogService();
 
   private Cart cart = new Cart();
   private String workingItemId;
+
+  public CartActionBean() throws IOException {
+  }
 
   public Cart getCart() {
     return cart;

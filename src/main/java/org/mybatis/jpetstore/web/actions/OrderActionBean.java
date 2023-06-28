@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2022 the original author or authors.
+ *    Copyright 2010-2023 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.mybatis.jpetstore.web.actions;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +25,6 @@ import javax.servlet.http.HttpSession;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.SessionScope;
-import net.sourceforge.stripes.integration.spring.SpringBean;
 
 import org.mybatis.jpetstore.domain.Order;
 import org.mybatis.jpetstore.service.OrderService;
@@ -47,8 +47,7 @@ public class OrderActionBean extends AbstractActionBean {
 
   private static final List<String> CARD_TYPE_LIST;
 
-  @SpringBean
-  private transient OrderService orderService;
+  private transient OrderService orderService = new OrderService();
 
   private Order order = new Order();
   private boolean shippingAddressRequired;
@@ -57,6 +56,9 @@ public class OrderActionBean extends AbstractActionBean {
 
   static {
     CARD_TYPE_LIST = Collections.unmodifiableList(Arrays.asList("Visa", "MasterCard", "American Express"));
+  }
+
+  public OrderActionBean() throws IOException {
   }
 
   public int getOrderId() {

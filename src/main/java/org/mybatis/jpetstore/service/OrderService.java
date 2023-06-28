@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2022 the original author or authors.
+ *    Copyright 2010-2023 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,10 +15,16 @@
  */
 package org.mybatis.jpetstore.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.mybatis.jpetstore.domain.Item;
 import org.mybatis.jpetstore.domain.Order;
 import org.mybatis.jpetstore.domain.Sequence;
@@ -42,12 +48,15 @@ public class OrderService {
   private final SequenceMapper sequenceMapper;
   private final LineItemMapper lineItemMapper;
 
-  public OrderService(ItemMapper itemMapper, OrderMapper orderMapper, SequenceMapper sequenceMapper,
-      LineItemMapper lineItemMapper) {
-    this.itemMapper = itemMapper;
-    this.orderMapper = orderMapper;
-    this.sequenceMapper = sequenceMapper;
-    this.lineItemMapper = lineItemMapper;
+  public OrderService() throws IOException {
+    String resource = "mybatis-config.xml";
+    InputStream inputStream = Resources.getResourceAsStream(resource);
+    SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    SqlSession session = sqlSessionFactory.openSession();
+    this.orderMapper = session.getMapper(OrderMapper.class);
+    this.itemMapper = session.getMapper(ItemMapper.class);
+    this.sequenceMapper = session.getMapper(SequenceMapper.class);
+    this.lineItemMapper = session.getMapper(LineItemMapper.class);
   }
 
   /**

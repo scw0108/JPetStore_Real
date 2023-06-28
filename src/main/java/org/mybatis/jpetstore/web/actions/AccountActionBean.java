@@ -1,5 +1,5 @@
 /*
- *    Copyright 2010-2022 the original author or authors.
+ *    Copyright 2010-2023 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.mybatis.jpetstore.web.actions;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +27,6 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.SessionScope;
-import net.sourceforge.stripes.integration.spring.SpringBean;
 import net.sourceforge.stripes.validation.Validate;
 
 import org.mybatis.jpetstore.domain.Account;
@@ -51,10 +51,9 @@ public class AccountActionBean extends AbstractActionBean {
   private static final List<String> LANGUAGE_LIST;
   private static final List<String> CATEGORY_LIST;
 
-  @SpringBean
-  private transient AccountService accountService;
-  @SpringBean
-  private transient CatalogService catalogService;
+  private transient AccountService accountService = new AccountService();
+
+  private transient CatalogService catalogService = new CatalogService();
 
   private Account account = new Account();
   private List<Product> myList;
@@ -63,6 +62,9 @@ public class AccountActionBean extends AbstractActionBean {
   static {
     LANGUAGE_LIST = Collections.unmodifiableList(Arrays.asList("english", "japanese"));
     CATEGORY_LIST = Collections.unmodifiableList(Arrays.asList("FISH", "DOGS", "REPTILES", "CATS", "BIRDS"));
+  }
+
+  public AccountActionBean() throws IOException {
   }
 
   public Account getAccount() {
@@ -157,7 +159,8 @@ public class AccountActionBean extends AbstractActionBean {
    * @return the resolution
    */
   public Resolution signon() {
-
+    System.out.println(getUsername());
+    System.out.println(getPassword());
     account = accountService.getAccount(getUsername(), getPassword());
 
     if (account == null) {
