@@ -17,6 +17,7 @@ package org.mybatis.jpetstore.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.mybatis.jpetstore.domain.Item;
+import org.mybatis.jpetstore.domain.LineItem;
 import org.mybatis.jpetstore.domain.Order;
 import org.mybatis.jpetstore.domain.Sequence;
 import org.mybatis.jpetstore.mapper.ItemMapper;
@@ -33,7 +35,6 @@ import org.mybatis.jpetstore.mapper.LineItemMapper;
 import org.mybatis.jpetstore.mapper.OrderMapper;
 import org.mybatis.jpetstore.mapper.SequenceMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The Class OrderService.
@@ -47,11 +48,12 @@ public class OrderService {
   private final OrderMapper orderMapper;
   private final SequenceMapper sequenceMapper;
   private final LineItemMapper lineItemMapper;
+  private final SqlSessionFactory sqlSessionFactory;
 
   public OrderService() throws IOException {
     String resource = "mybatis-config.xml";
     InputStream inputStream = Resources.getResourceAsStream(resource);
-    SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
     SqlSession session = sqlSessionFactory.openSession();
     this.orderMapper = session.getMapper(OrderMapper.class);
     this.itemMapper = session.getMapper(ItemMapper.class);
@@ -65,9 +67,11 @@ public class OrderService {
    * @param order
    *          the order
    */
-  @Transactional
-  public void insertOrder(Order order) {
+  public void insertOrder(Order order) throws SQLException {
+
     order.setOrderId(getNextId("ordernum"));
+
+
     order.getLineItems().forEach(lineItem -> {
       String itemId = lineItem.getItemId();
       Integer increment = lineItem.getQuantity();
@@ -77,12 +81,33 @@ public class OrderService {
       itemMapper.updateInventoryQuantity(param);
     });
 
-    orderMapper.insertOrder(order);
-    orderMapper.insertOrderStatus(order);
-    order.getLineItems().forEach(lineItem -> {
-      lineItem.setOrderId(order.getOrderId());
-      lineItemMapper.insertLineItem(lineItem);
-    });
+
+    SqlSession sqlSession = sqlSessionFactory.openSession();
+    try {
+      OrderMapper orderMapper = sqlSession.getMapper(OrderMapper.class);
+      LineItemMapper lineItemMapper = sqlSession.getMapper(LineItemMapper.class);
+
+      sqlSession.getConnection().setAutoCommit(false);
+
+      try {
+        orderMapper.insertOrder(order);
+        orderMapper.insertOrderStatus(order);
+
+
+        order.getLineItems().forEach(lineItem -> {
+          lineItem.setOrderId(order.getOrderId());
+          lineItemMapper.insertLineItem(lineItem);
+        });
+
+        sqlSession.commit();
+      } catch (Exception e) {
+
+        sqlSession.rollback();
+        throw e;
+      }
+    } finally {
+      sqlSession.close();
+    }
   }
 
   /**
@@ -93,18 +118,41 @@ public class OrderService {
    *
    * @return the order
    */
-  @Transactional
-  public Order getOrder(int orderId) {
-    Order order = orderMapper.getOrder(orderId);
-    order.setLineItems(lineItemMapper.getLineItemsByOrderId(orderId));
+  public Order getOrder(int orderId) throws SQLException {
+    SqlSession sqlSession = sqlSessionFactory.openSession();
+    try {
+      OrderMapper orderMapper = sqlSession.getMapper(OrderMapper.class);
+      LineItemMapper lineItemMapper = sqlSession.getMapper(LineItemMapper.class);
+      ItemMapper itemMapper = sqlSession.getMapper(ItemMapper.class);
 
-    order.getLineItems().forEach(lineItem -> {
-      Item item = itemMapper.getItem(lineItem.getItemId());
-      item.setQuantity(itemMapper.getInventoryQuantity(lineItem.getItemId()));
-      lineItem.setItem(item);
-    });
+      try {
 
-    return order;
+        sqlSession.getConnection().setAutoCommit(false);
+
+
+        Order order = orderMapper.getOrder(orderId);
+        List<LineItem> lineItems = lineItemMapper.getLineItemsByOrderId(orderId);
+        order.setLineItems(lineItems);
+
+
+        lineItems.forEach(lineItem -> {
+          Item item = itemMapper.getItem(lineItem.getItemId());
+          item.setQuantity(itemMapper.getInventoryQuantity(lineItem.getItemId()));
+          lineItem.setItem(item);
+        });
+
+
+        sqlSession.commit();
+
+        return order;
+      } catch (SQLException e) {
+
+        sqlSession.rollback();
+        throw e;
+      }
+    } finally {
+      sqlSession.close();
+    }
   }
 
   /**

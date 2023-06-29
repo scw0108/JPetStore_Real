@@ -16,6 +16,7 @@
 package org.mybatis.jpetstore.web.actions;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -114,7 +115,7 @@ public class AccountActionBean extends AbstractActionBean {
    *
    * @return the resolution
    */
-  public Resolution newAccount() {
+  public Resolution newAccount() throws SQLException {
     accountService.insertAccount(account);
     account = accountService.getAccount(account.getUsername());
     myList = catalogService.getProductListByCategory(account.getFavouriteCategoryId());
@@ -128,6 +129,7 @@ public class AccountActionBean extends AbstractActionBean {
    * @return the resolution
    */
   public Resolution editAccountForm() {
+    System.out.println("hi");
     return new ForwardResolution(EDIT_ACCOUNT);
   }
 
@@ -136,7 +138,8 @@ public class AccountActionBean extends AbstractActionBean {
    *
    * @return the resolution
    */
-  public Resolution editAccount() {
+  public Resolution editAccount() throws SQLException {
+    System.out.println("hi");
     accountService.updateAccount(account);
     account = accountService.getAccount(account.getUsername());
     myList = catalogService.getProductListByCategory(account.getFavouriteCategoryId());

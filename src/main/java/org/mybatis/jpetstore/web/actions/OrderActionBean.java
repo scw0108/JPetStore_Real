@@ -16,6 +16,7 @@
 package org.mybatis.jpetstore.web.actions;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -141,7 +142,7 @@ public class OrderActionBean extends AbstractActionBean {
    *
    * @return the resolution
    */
-  public Resolution newOrder() {
+  public Resolution newOrder() throws SQLException {
     HttpSession session = context.getRequest().getSession();
 
     if (shippingAddressRequired) {
@@ -170,7 +171,7 @@ public class OrderActionBean extends AbstractActionBean {
    *
    * @return the resolution
    */
-  public Resolution viewOrder() {
+  public Resolution viewOrder() throws SQLException {
     HttpSession session = context.getRequest().getSession();
 
     AccountActionBean accountBean = (AccountActionBean) session.getAttribute("accountBean");

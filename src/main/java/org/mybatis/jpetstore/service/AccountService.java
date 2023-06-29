@@ -17,6 +17,7 @@ package org.mybatis.jpetstore.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.Optional;
 
 import org.apache.ibatis.io.Resources;
@@ -25,7 +26,6 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.mybatis.jpetstore.domain.Account;
 import org.mybatis.jpetstore.mapper.AccountMapper;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The Class AccountService.
@@ -35,12 +35,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountService {
 
   private AccountMapper accountMapper;
+  private SqlSessionFactory sqlSessionFactory;
 
   public AccountService() throws IOException {
 
     String resource = "mybatis-config.xml";
     InputStream inputStream = Resources.getResourceAsStream(resource);
-    SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
     SqlSession session = sqlSessionFactory.openSession();
     this.accountMapper = session.getMapper(AccountMapper.class);
     // System.out.println(accountMapper);
@@ -61,11 +62,29 @@ public class AccountService {
    * @param account
    *          the account
    */
-  @Transactional
-  public void insertAccount(Account account) {
-    accountMapper.insertAccount(account);
-    accountMapper.insertProfile(account);
-    accountMapper.insertSignon(account);
+  public void insertAccount(Account account) throws SQLException {
+    SqlSession sqlSession = sqlSessionFactory.openSession();
+    try {
+      AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
+
+
+      sqlSession.getConnection().setAutoCommit(false);
+
+      try {
+        accountMapper.insertAccount(account);
+        accountMapper.insertProfile(account);
+        accountMapper.insertSignon(account);
+
+
+        sqlSession.commit();
+      } catch (Exception e) {
+
+        sqlSession.rollback();
+        throw e;
+      }
+    } finally {
+      sqlSession.close();
+    }
   }
 
   /**
@@ -74,13 +93,29 @@ public class AccountService {
    * @param account
    *          the account
    */
-  @Transactional
-  public void updateAccount(Account account) {
-    accountMapper.updateAccount(account);
-    accountMapper.updateProfile(account);
+  public void updateAccount(Account account) throws SQLException {
+    SqlSession sqlSession = sqlSessionFactory.openSession();
+    try {
+      AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
 
-    Optional.ofNullable(account.getPassword()).filter(password -> password.length() > 0)
-        .ifPresent(password -> accountMapper.updateSignon(account));
+      sqlSession.getConnection().setAutoCommit(false);
+
+      try {
+        accountMapper.updateAccount(account);
+        accountMapper.updateProfile(account);
+
+        Optional.ofNullable(account.getPassword()).filter(password -> password.length() > 0)
+            .ifPresent(password -> accountMapper.updateSignon(account));
+
+        sqlSession.commit();
+      } catch (Exception e) {
+
+        sqlSession.rollback();
+        throw e;
+      }
+    } finally {
+      sqlSession.close();
+    }
   }
 
 }
