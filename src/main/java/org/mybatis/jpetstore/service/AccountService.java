@@ -44,11 +44,9 @@ public class AccountService {
     this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
     SqlSession session = sqlSessionFactory.openSession();
     this.accountMapper = session.getMapper(AccountMapper.class);
-    // System.out.println(accountMapper);
   }
 
   public Account getAccount(String username) {
-    System.out.println(username);
     return accountMapper.getAccountByUsername(username);
   }
 
@@ -67,14 +65,12 @@ public class AccountService {
     try {
       AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
 
-
       sqlSession.getConnection().setAutoCommit(false);
 
       try {
         accountMapper.insertAccount(account);
         accountMapper.insertProfile(account);
         accountMapper.insertSignon(account);
-
 
         sqlSession.commit();
       } catch (Exception e) {

@@ -34,14 +34,12 @@ import org.mybatis.jpetstore.mapper.ItemMapper;
 import org.mybatis.jpetstore.mapper.LineItemMapper;
 import org.mybatis.jpetstore.mapper.OrderMapper;
 import org.mybatis.jpetstore.mapper.SequenceMapper;
-import org.springframework.stereotype.Service;
 
 /**
  * The Class OrderService.
  *
  * @author Eduardo Macarron
  */
-@Service
 public class OrderService {
 
   private final ItemMapper itemMapper;
@@ -71,7 +69,6 @@ public class OrderService {
 
     order.setOrderId(getNextId("ordernum"));
 
-
     order.getLineItems().forEach(lineItem -> {
       String itemId = lineItem.getItemId();
       Integer increment = lineItem.getQuantity();
@@ -80,7 +77,6 @@ public class OrderService {
       param.put("increment", increment);
       itemMapper.updateInventoryQuantity(param);
     });
-
 
     SqlSession sqlSession = sqlSessionFactory.openSession();
     try {
@@ -92,7 +88,6 @@ public class OrderService {
       try {
         orderMapper.insertOrder(order);
         orderMapper.insertOrderStatus(order);
-
 
         order.getLineItems().forEach(lineItem -> {
           lineItem.setOrderId(order.getOrderId());
@@ -129,18 +124,15 @@ public class OrderService {
 
         sqlSession.getConnection().setAutoCommit(false);
 
-
         Order order = orderMapper.getOrder(orderId);
         List<LineItem> lineItems = lineItemMapper.getLineItemsByOrderId(orderId);
         order.setLineItems(lineItems);
-
 
         lineItems.forEach(lineItem -> {
           Item item = itemMapper.getItem(lineItem.getItemId());
           item.setQuantity(itemMapper.getInventoryQuantity(lineItem.getItemId()));
           lineItem.setItem(item);
         });
-
 
         sqlSession.commit();
 

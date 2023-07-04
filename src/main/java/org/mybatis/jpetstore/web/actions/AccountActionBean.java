@@ -20,7 +20,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 import javax.servlet.http.HttpSession;
 
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -129,7 +128,6 @@ public class AccountActionBean extends AbstractActionBean {
    * @return the resolution
    */
   public Resolution editAccountForm() {
-    System.out.println("hi");
     return new ForwardResolution(EDIT_ACCOUNT);
   }
 
@@ -139,7 +137,6 @@ public class AccountActionBean extends AbstractActionBean {
    * @return the resolution
    */
   public Resolution editAccount() throws SQLException {
-    System.out.println("hi");
     accountService.updateAccount(account);
     account = accountService.getAccount(account.getUsername());
     myList = catalogService.getProductListByCategory(account.getFavouriteCategoryId());
@@ -162,8 +159,6 @@ public class AccountActionBean extends AbstractActionBean {
    * @return the resolution
    */
   public Resolution signon() {
-    System.out.println(getUsername());
-    System.out.println(getPassword());
     account = accountService.getAccount(getUsername(), getPassword());
 
     if (account == null) {
