@@ -38,12 +38,11 @@ public class AccountService {
   private SqlSessionFactory sqlSessionFactory;
 
   public AccountService() throws IOException {
-
     String resource = "mybatis-config.xml";
-    InputStream inputStream = Resources.getResourceAsStream(resource);
-    this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
-    SqlSession session = sqlSessionFactory.openSession();
-    this.accountMapper = session.getMapper(AccountMapper.class);
+    try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
+      this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    }
+    this.accountMapper = sqlSessionFactory.openSession().getMapper(AccountMapper.class);
   }
 
   public Account getAccount(String username) {
@@ -54,15 +53,8 @@ public class AccountService {
     return accountMapper.getAccountByUsernameAndPassword(username, password);
   }
 
-  /**
-   * Insert account.
-   *
-   * @param account
-   *          the account
-   */
   public void insertAccount(Account account) throws SQLException {
-    SqlSession sqlSession = sqlSessionFactory.openSession();
-    try {
+    try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
       AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
 
       sqlSession.getConnection().setAutoCommit(false);
@@ -74,26 +66,15 @@ public class AccountService {
 
         sqlSession.commit();
       } catch (Exception e) {
-
         sqlSession.rollback();
         throw e;
       }
-    } finally {
-      sqlSession.close();
     }
   }
 
-  /**
-   * Update account.
-   *
-   * @param account
-   *          the account
-   */
   public void updateAccount(Account account) throws SQLException {
-    SqlSession sqlSession = sqlSessionFactory.openSession();
-    try {
+    try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
       AccountMapper accountMapper = sqlSession.getMapper(AccountMapper.class);
-
       sqlSession.getConnection().setAutoCommit(false);
 
       try {
@@ -105,13 +86,9 @@ public class AccountService {
 
         sqlSession.commit();
       } catch (Exception e) {
-
         sqlSession.rollback();
         throw e;
       }
-    } finally {
-      sqlSession.close();
     }
   }
-
 }

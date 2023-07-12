@@ -50,8 +50,9 @@ public class OrderService {
 
   public OrderService() throws IOException {
     String resource = "mybatis-config.xml";
-    InputStream inputStream = Resources.getResourceAsStream(resource);
-    this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
+      this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    }
     SqlSession session = sqlSessionFactory.openSession();
     this.orderMapper = session.getMapper(OrderMapper.class);
     this.itemMapper = session.getMapper(ItemMapper.class);
@@ -66,9 +67,7 @@ public class OrderService {
    *          the order
    */
   public void insertOrder(Order order) throws SQLException {
-
     order.setOrderId(getNextId("ordernum"));
-
     order.getLineItems().forEach(lineItem -> {
       String itemId = lineItem.getItemId();
       Integer increment = lineItem.getQuantity();
@@ -78,13 +77,10 @@ public class OrderService {
       itemMapper.updateInventoryQuantity(param);
     });
 
-    SqlSession sqlSession = sqlSessionFactory.openSession();
-    try {
+    try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
       OrderMapper orderMapper = sqlSession.getMapper(OrderMapper.class);
       LineItemMapper lineItemMapper = sqlSession.getMapper(LineItemMapper.class);
-
       sqlSession.getConnection().setAutoCommit(false);
-
       try {
         orderMapper.insertOrder(order);
         orderMapper.insertOrderStatus(order);
@@ -96,12 +92,9 @@ public class OrderService {
 
         sqlSession.commit();
       } catch (Exception e) {
-
         sqlSession.rollback();
         throw e;
       }
-    } finally {
-      sqlSession.close();
     }
   }
 
@@ -114,13 +107,11 @@ public class OrderService {
    * @return the order
    */
   public Order getOrder(int orderId) throws SQLException {
-    SqlSession sqlSession = sqlSessionFactory.openSession();
-    try {
-      OrderMapper orderMapper = sqlSession.getMapper(OrderMapper.class);
-      LineItemMapper lineItemMapper = sqlSession.getMapper(LineItemMapper.class);
-      ItemMapper itemMapper = sqlSession.getMapper(ItemMapper.class);
-
+    try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
       try {
+        OrderMapper orderMapper = sqlSession.getMapper(OrderMapper.class);
+        LineItemMapper lineItemMapper = sqlSession.getMapper(LineItemMapper.class);
+        ItemMapper itemMapper = sqlSession.getMapper(ItemMapper.class);
 
         sqlSession.getConnection().setAutoCommit(false);
 
@@ -138,12 +129,9 @@ public class OrderService {
 
         return order;
       } catch (SQLException e) {
-
         sqlSession.rollback();
         throw e;
       }
-    } finally {
-      sqlSession.close();
     }
   }
 
@@ -167,15 +155,25 @@ public class OrderService {
    *
    * @return the next id
    */
-  public int getNextId(String name) {
+  public int getNextId(String name) throws SQLException {
     Sequence sequence = sequenceMapper.getSequence(new Sequence(name, -1));
     if (sequence == null) {
       throw new RuntimeException(
           "Error: A null sequence was returned from the database (could not get next " + name + " sequence).");
     }
     Sequence parameterObject = new Sequence(name, sequence.getNextId() + 1);
-    sequenceMapper.updateSequence(parameterObject);
-    return sequence.getNextId();
+    try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
+      try {
+        SequenceMapper sequenceMapper = sqlSession.getMapper(SequenceMapper.class);
+        sqlSession.getConnection().setAutoCommit(false);
+        sequenceMapper.updateSequence(parameterObject);
+        sqlSession.commit();
+        return sequence.getNextId();
+      } catch (SQLException e) {
+        sqlSession.rollback();
+        throw e;
+      }
+    }
   }
 
 }

@@ -42,13 +42,14 @@ public class CatalogService {
   private final CategoryMapper categoryMapper;
   private final ItemMapper itemMapper;
   private final ProductMapper productMapper;
+  private SqlSessionFactory sqlSessionFactory;
 
   public CatalogService() throws IOException {
     String resource = "mybatis-config.xml";
-    InputStream inputStream = Resources.getResourceAsStream(resource);
-    SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
+      this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    }
     SqlSession session = sqlSessionFactory.openSession();
-
     this.categoryMapper = session.getMapper(CategoryMapper.class);
     this.itemMapper = session.getMapper(ItemMapper.class);
     this.productMapper = session.getMapper(ProductMapper.class);
