@@ -46,12 +46,14 @@ public class OrderService {
   private final OrderMapper orderMapper;
   private final SequenceMapper sequenceMapper;
   private final LineItemMapper lineItemMapper;
-  private final SqlSessionFactory sqlSessionFactory;
+  private SqlSessionFactory sqlSessionFactory;
 
-  public OrderService() throws IOException {
+  public OrderService(){
     String resource = "mybatis-config.xml";
     try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
       this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
     SqlSession session = sqlSessionFactory.openSession();
     this.orderMapper = session.getMapper(OrderMapper.class);

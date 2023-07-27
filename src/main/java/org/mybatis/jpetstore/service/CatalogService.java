@@ -15,7 +15,6 @@
  */
 package org.mybatis.jpetstore.service;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,10 +43,12 @@ public class CatalogService {
   private final ProductMapper productMapper;
   private SqlSessionFactory sqlSessionFactory;
 
-  public CatalogService() throws IOException {
+  public CatalogService() {
     String resource = "mybatis-config.xml";
     try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
       this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
     SqlSession session = sqlSessionFactory.openSession();
     this.categoryMapper = session.getMapper(CategoryMapper.class);

@@ -15,7 +15,6 @@
  */
 package org.mybatis.jpetstore.service;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -37,10 +36,12 @@ public class AccountService {
   private AccountMapper accountMapper;
   private SqlSessionFactory sqlSessionFactory;
 
-  public AccountService() throws IOException {
+  public AccountService() {
     String resource = "mybatis-config.xml";
     try (InputStream inputStream = Resources.getResourceAsStream(resource)) {
       this.sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
     this.accountMapper = sqlSessionFactory.openSession().getMapper(AccountMapper.class);
   }
